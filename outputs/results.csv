@@ -1,0 +1,2 @@
+,dischargedata,metdata,metdata2,identifier,ablationmodel,dt,dz,runtime,todoy,tau,iceondoy,T_permafrost_C,D84bed,D50bank,bh,gravelz,bfbh,width,Xiw,Fi,starth,bedslope,nullflag,meanannualerosionrate_mperyr
+0,data/dmddata.csv,data/Mfile1.csv,data/Mfile2.csv,default,gravelroughness,10800,0.01,63072000,151,14,274,-8,0.064,5e-05,1.7,0.5,1.6,790,35,75,0.5,0.003,False,2.7761720496186744
