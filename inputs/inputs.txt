@@ -1,0 +1,7 @@
+{"dischargedata":'data/dmddata.csv',
+"metdata":'data/Mfile1.csv',
+"metdata2" : 'data/Mfile2.csv',
+"identifier": 
+
+
+}

@@ -1,0 +1,4 @@
+,dischargedata,metdata,metdata2,identifier,ablationmodel,dt,dz,runtime,todoy,tau,iceondoy,T_permafrost_C,D84bed,D50bank,bh,gravelz,bfbh,width,Xiw,Fi,starth,bedslope,nullflag,meanannualerosionrate_mperyr
+0,data/primarydata.csv,data/CanningRiverAll_JA.csv,data/Mfile2.csv,default,gravelroughness,10800,0.01,63072000,151,14,274,-8,0.064,5e-05,1.7,0.5,1.6,790,35,75,0.5,0.003,False,2.7761720496186744
+0,data/primarydata.csv,data/CanningRiverAll_JA.csv,data/Mfile2.csv,noice,gravelroughness,10800,0.01,63072000,151,0,274,-8,0.064,5e-05,1.7,0.5,1.6,790,35,75,0.5,0.003,True,2.1667364061286962
+0,data/primarydata.csv,data/CanningRiverAll_JA.csv,data/Mfile2.csv,alternativeablationmodel,bankroughness,10800,0.01,63072000,151,14,274,-8,0.064,5e-05,1.7,0.5,1.6,790,35,75,0.5,0.003,False,15.642054059140934
