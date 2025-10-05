@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: PermafrostBankErosionModel
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Josephine
+    family-names: Arcuri
+    orcid: 'https://orcid.org/0000-0003-0923-9061'
+identifiers:
+  - type: doi
+    value: XXXXXXX
+repository-code: 'https://github.com/josiearcuri/PermafrostBankErosionModel'
+abstract: >-
+  The Permafrost Bank Erosion Model simulates the melting of interstitial substrate ice and
+  associated riverbank collapse.
+keywords:
+  - Permafrost Bank Erosion Model
+  - Permafrost Bank Erosion
+license: GPLv3
+version: 0.0.1
+date-released: '2025-10-05'
