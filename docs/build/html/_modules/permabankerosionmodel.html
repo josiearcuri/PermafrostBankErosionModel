@@ -1,0 +1,549 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>permabankerosionmodel &#8212; PermafrostBankErosionModel 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for permabankerosionmodel</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">permafrostbankerosionrmodel.py</span>
+
+<span class="sd">JA 2025</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="c1">#from scipy import interpolate</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BankProfile"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankProfile">[docs]</a><span class="k">class</span> <span class="nc">BankProfile</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;class for bank profile objects&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">Tw</span><span class="p">,</span> <span class="n">Ta</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">D50block</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        initialize profile object</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x: array</span>
+<span class="sd">            x-coordinates of nodes in m</span>
+<span class="sd">        time: float</span>
+<span class="sd">            representative time - or age - of profile in seconds</span>
+<span class="sd">        Tw: float</span>
+<span class="sd">            water temperature in degrees K</span>
+<span class="sd">        Ta: float</span>
+<span class="sd">            air temperature in degrees K</span>
+<span class="sd">        stage: float</span>
+<span class="sd">            river water stage in m</span>
+<span class="sd">        D50block: float</span>
+<span class="sd">           diameter of collapsed block in m</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Tw</span> <span class="o">=</span> <span class="n">Tw</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ta</span> <span class="o">=</span> <span class="n">Ta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stage</span> <span class="o">=</span> <span class="n">stage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D50block</span> <span class="o">=</span> <span class="n">D50block</span></div>
+
+<div class="viewcode-block" id="BankErosionModel"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel">[docs]</a><span class="k">class</span> <span class="nc">BankErosionModel</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;permafrost bank erosion model&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">bcdf</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;initialize model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        params: dict</span>
+<span class="sd">            all model parameters.</span>
+<span class="sd">        bcdict: dict</span>
+<span class="sd">            all boundary conditions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D84bed</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;D84bed&quot;</span><span class="p">]</span> <span class="c1">#fluvial gravel 84th percentile diameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D50bank</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;D50bank&quot;</span><span class="p">]</span><span class="c1">#bank sediment 50th percentile diameter</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_time</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">dz</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;dz&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;dt&quot;</span><span class="p">]</span>
+    
+        <span class="c1">### river temperature and seasonality</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">river_temp</span> <span class="o">=</span> <span class="mf">273.15</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">To</span> <span class="o">=</span> <span class="mf">273.15</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">tensileice</span> <span class="o">=</span> <span class="mf">1e5</span> <span class="c1">#Pa         </span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tensilepf</span> <span class="o">=</span> <span class="mf">2e5</span> <span class="c1">#Pa         </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D50block</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">D50bank</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;width&quot;</span><span class="p">]</span>
+        <span class="c1">### material properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Fi</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;Fi&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span>  <span class="c1"># .5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L_ice</span> <span class="o">=</span> <span class="mi">334000</span>  <span class="c1"># J/kg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="mf">9.81</span>
+        <span class="c1">#heat capacity</span>
+        <span class="n">Cs</span> <span class="o">=</span> <span class="mi">1000</span>
+        <span class="n">Ci</span> <span class="o">=</span> <span class="mi">2100</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Cwater</span> <span class="o">=</span> <span class="mi">4184</span> <span class="c1">#J/kg/degreesC</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C_perma</span> <span class="o">=</span><span class="n">Cs</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">Fi</span><span class="p">)</span> <span class="o">+</span> <span class="n">Ci</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Fi</span><span class="p">)</span> 
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho_ice</span> <span class="o">=</span> <span class="mi">917</span>  <span class="c1"># ice density, kg/m3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_water</span> <span class="o">=</span>  <span class="mf">0.598</span>  <span class="c1"># water thermal conductivity, J/smK</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_s</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># substrate thermal conductivity J/smK</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_ice</span><span class="o">=</span>  <span class="mf">0.54</span>  <span class="c1"># ice therml conductivity J/smK</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho_w</span> <span class="o">=</span> <span class="mi">1000</span>  <span class="c1"># water density kg/m3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho_soil</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2650</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">Fi</span><span class="p">))</span><span class="o">+</span><span class="p">(</span><span class="mi">917</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Fi</span><span class="p">))</span><span class="c1"># substrate density kg/m3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho_s</span> <span class="o">=</span> <span class="mi">2650</span> <span class="c1"># gravel density kg/m3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho_block</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_soil</span><span class="c1"># gravel density kg/m3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gravelz</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;gravelz&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bedslope</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;bedslope&quot;</span><span class="p">]</span> <span class="c1">#longitudnal river bed slope</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bankheight</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;bh&quot;</span><span class="p">]</span> <span class="c1"># bank height above fuvial gravel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bankslope_init</span> <span class="o">=</span> <span class="mi">90</span><span class="c1">#params[&quot;initial_bankslope&quot;] # </span>
+        <span class="c1">### load external forcing timeseris</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T_perma</span> <span class="o">=</span> <span class="mf">273.15</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;T_permafrost_C&quot;</span><span class="p">]</span>  <span class="c1">#bank substrate temperature, C</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tfreeze</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;iceondoy&quot;</span><span class="p">]</span> <span class="c1">#day of year water begins to freeze</span>
+        <span class="c1">##ice wedge geometry</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iw_spacing</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;Xiw&quot;</span><span class="p">]</span> <span class="c1"># ice wedge spacing, m</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iw_depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bankheight</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_bcs</span><span class="p">(</span><span class="n">bcdf</span><span class="p">)</span>
+        
+        <span class="c1">#choose ablation model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ablationmodel</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;ablationmodel&quot;</span><span class="p">]</span> <span class="c1">#or &quot;bankroughness&quot;</span>
+        
+        <span class="c1"># set initial river bank profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_initial_profile</span><span class="p">()</span> 
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cumulativeheatflux</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span>
+
+<div class="viewcode-block" id="BankErosionModel.run"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run simulation from current profile to specified end time&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_time</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">run_time</span>
+                                       
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ablationmodel</span><span class="p">)</span> <span class="o">==</span><span class="s1">&#39;gravelroughness&#39;</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_time</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span>      
+                <span class="n">doy</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">/</span> <span class="p">(</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span><span class="p">))</span> <span class="o">%</span> <span class="mi">365</span>
+                    <span class="c1">#minimize useless profiles</span>
+                <span class="n">lateralerosion</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+                <span class="n">collapsedeltax</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_bcs</span><span class="p">()</span>
+        
+                <span class="k">if</span> <span class="p">(</span><span class="n">doy</span> <span class="o">&gt;=</span> <span class="mi">151</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">doy</span> <span class="o">&lt;</span><span class="bp">self</span><span class="o">.</span><span class="n">tfreeze</span><span class="p">):</span>
+                    <span class="n">Va</span><span class="p">,</span> <span class="n">heatflux</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ablation</span><span class="p">()</span>
+
+<span class="c1">#                     blockVa = Va*np.min(((self.h_stage)/(self.D50block), 1))</span>
+<span class="c1">#                     self.D50block =np.nanmax((self.D50block - blockVa*self.dt, self.D50bank))</span>
+
+<span class="c1">#                     # entrainment = self.entrain()    </span>
+                    <span class="c1">#                     #block collapse</span>
+                    <span class="c1">#                     # if entrainment== True:</span>
+                    <span class="n">lateralerosion</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">gravelz</span><span class="p">]</span> <span class="o">=</span> <span class="n">Va</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+
+                    <span class="n">collapsedeltax</span><span class="p">,</span> <span class="n">collapsearea</span><span class="p">,</span> <span class="n">collapsecount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solve_collapse</span><span class="p">()</span> 
+
+                    <span class="n">lateralerosion</span> <span class="o">=</span> <span class="n">lateralerosion</span> <span class="o">+</span><span class="n">collapsedeltax</span>
+                    <span class="n">xnew</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="o">+</span> <span class="n">lateralerosion</span>
+                    <span class="n">newprofile</span> <span class="o">=</span> <span class="n">BankProfile</span><span class="p">(</span><span class="n">xnew</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">Tw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span><span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">gravelz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D50block</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cumulativeheatflux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">([</span><span class="n">heatflux</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulativeheatflux</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">newprofile</span>
+                        <span class="c1">#  print(&quot;entrained&quot;)</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ablationmodel</span><span class="p">)</span> <span class="o">==</span><span class="s1">&#39;bankroughness&#39;</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_time</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span>      
+                <span class="n">doy</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">/</span> <span class="p">(</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span><span class="p">))</span> <span class="o">%</span> <span class="mi">365</span>
+                    <span class="c1">#minimize useless profiles</span>
+
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_bcs</span><span class="p">()</span>
+        
+                <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Tw</span><span class="o">&gt;</span><span class="bp">self</span><span class="o">.</span><span class="n">To</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">doy</span> <span class="o">&lt;</span><span class="bp">self</span><span class="o">.</span><span class="n">tfreeze</span><span class="p">):</span>
+                    <span class="n">lateralerosion</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+                    <span class="n">collapsedeltax</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="n">Va</span><span class="p">,</span> <span class="n">heatflux</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ablation_bankgrainroughness</span><span class="p">()</span>
+
+<span class="c1">#                     blockVa = Va*np.min(((self.h_stage)/(self.D50block), 1))</span>
+<span class="c1">#                     self.D50block =np.nanmax((self.D50block - blockVa*self.dt, self.D50bank))</span>
+
+<span class="c1">#                     # entrainment = self.entrain()    </span>
+                    <span class="c1">#                     #block collapse</span>
+                    <span class="c1">#                     # if entrainment== True:</span>
+                    <span class="n">lateralerosion</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span><span class="p">]</span> <span class="o">=</span> <span class="n">Va</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+
+                    <span class="n">collapsedeltax</span><span class="p">,</span> <span class="n">collapsearea</span><span class="p">,</span> <span class="n">collapsecount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solve_collapse</span><span class="p">()</span> 
+
+                    <span class="n">lateralerosion</span> <span class="o">=</span> <span class="n">lateralerosion</span> <span class="o">+</span><span class="n">collapsedeltax</span>                      <span class="c1">#  print(&quot;entrained&quot;)</span>
+                    <span class="n">xnew</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="o">+</span> <span class="n">lateralerosion</span>
+                    <span class="n">newprofile</span> <span class="o">=</span> <span class="n">BankProfile</span><span class="p">(</span><span class="n">xnew</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">Tw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D50block</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cumulativeheatflux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">([</span><span class="n">heatflux</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulativeheatflux</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">newprofile</span>
+  
+        <span class="k">return</span></div>
+<div class="viewcode-block" id="BankErosionModel.entrain"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.entrain">[docs]</a>    <span class="k">def</span> <span class="nf">entrain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;check if block is entrained and reset size if entrained</span>
+<span class="sd">        Return</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excess: byte</span>
+<span class="sd">            flag for if block/gravel is entrained or not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">excess</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="mf">0.05</span><span class="c1">#2.12*self.bedslope + 0.02</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="mf">9.81</span>
+
+        <span class="n">U</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_Ustar</span><span class="p">()</span>
+        <span class="n">Uc</span> <span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">phi</span><span class="o">*</span><span class="n">g</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_block</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho_w</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">D50block</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_w</span><span class="p">)</span>
+        <span class="n">excessu</span> <span class="o">=</span> <span class="n">U</span> <span class="o">-</span> <span class="n">Uc</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">excessu</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span><span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">excess</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rho_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho_s</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">D50block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D50bank</span>
+        <span class="k">return</span> <span class="n">excess</span></div>
+<span class="c1"># shear velocity</span>
+<div class="viewcode-block" id="BankErosionModel.get_Ustar"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.get_Ustar">[docs]</a>    <span class="k">def</span> <span class="nf">get_Ustar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get river water shear velocity</span>
+<span class="sd">        </span>
+<span class="sd">        Return</span>
+<span class="sd">        ------</span>
+<span class="sd">        ustar: float</span>
+<span class="sd">            river water shear velocity</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+   
+        <span class="n">ustar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span><span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bedslope</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ustar</span></div>
+    
+<div class="viewcode-block" id="BankErosionModel.solve_collapse"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.solve_collapse">[docs]</a>    <span class="k">def</span> <span class="nf">solve_collapse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;calculate erosion from upper bank collapse, based on Barnhart et al. (2003)</span>
+<span class="sd">        </span>
+<span class="sd">        Return</span>
+<span class="sd">        -------</span>
+<span class="sd">        C: array</span>
+<span class="sd">            erosion for each node in the bank profile</span>
+<span class="sd">        Carea: float</span>
+<span class="sd">            area of collapsed block</span>
+<span class="sd">        Ccount: int</span>
+<span class="sd">            number of collapses in timestep</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">Carea</span> <span class="o">=</span> <span class="mi">0</span>    
+        <span class="n">C</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">Ccount</span> <span class="o">=</span> <span class="mi">0</span>
+       <span class="c1"># if (np.max(x)&lt; x[-1]):</span>
+            <span class="c1">#pivot point</span>
+        <span class="n">idx</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span><span class="o">==</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">x</span><span class="p">))[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">xpiv</span> <span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">zpiv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">blockidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">&gt;</span><span class="n">zpiv</span><span class="p">)[</span><span class="mi">0</span><span class="p">][:]</span>
+
+            <span class="c1">#distance to ice wedge</span>
+        <span class="n">xiw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xiw</span>
+            
+            <span class="c1">#block height</span>
+        <span class="n">bheight</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">zpiv</span>
+            
+            <span class="c1">#bulk density</span>
+        <span class="n">rhobulk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho_soil</span>
+        <span class="n">lend</span> <span class="o">=</span> <span class="p">(</span><span class="n">xpiv</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">blockidx</span><span class="p">])</span>
+        <span class="n">lenr</span> <span class="o">=</span> <span class="n">xiw</span> <span class="o">-</span> <span class="n">xpiv</span> 
+            
+            <span class="c1">#driving torque</span>
+        <span class="n">blockarea</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">xpiv</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">blockidx</span><span class="p">])</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="p">)</span>
+        <span class="n">Td</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="o">*</span><span class="n">rhobulk</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="o">*</span><span class="p">(</span><span class="n">xpiv</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">blockidx</span><span class="p">]))</span> <span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">xpiv</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">blockidx</span><span class="p">]))</span>
+             <span class="c1">#resisting force * length</span>
+        <span class="n">Tiw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tensileice</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">xpiv</span> <span class="o">-</span> <span class="n">xiw</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">blockidx</span><span class="p">]</span> <span class="o">-</span> <span class="n">xpiv</span><span class="p">))</span><span class="o">/</span><span class="n">bheight</span>
+            
+            <span class="c1">#resisting force * length</span>
+        <span class="n">Tpf</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">tensilepf</span><span class="p">)</span><span class="o">*</span><span class="n">bheight</span><span class="o">*</span><span class="p">(</span><span class="n">xpiv</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>          
+            <span class="c1">#resisting torque</span>
+        <span class="n">Tr</span> <span class="o">=</span> <span class="n">bheight</span><span class="o">*</span><span class="n">rhobulk</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="o">*</span><span class="p">(</span><span class="n">xiw</span> <span class="o">-</span> <span class="n">xpiv</span><span class="p">)</span> <span class="o">+</span> <span class="n">Tpf</span><span class="o">+</span><span class="n">Tiw</span>           
+
+            
+        <span class="k">if</span> <span class="n">Td</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Tr</span><span class="p">):</span>
+                <span class="c1"># view bank profile just before collapse</span>
+            <span class="n">C</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">zpiv</span><span class="p">]</span><span class="o">=</span>  <span class="p">(</span><span class="n">xpiv</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">zpiv</span><span class="p">])</span>
+            <span class="n">Carea</span> <span class="o">+=</span> <span class="n">blockarea</span>
+            <span class="n">Ccount</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rho_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho_soil</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">D50block</span> <span class="o">=</span> <span class="n">blockarea</span><span class="o">/</span><span class="mi">2</span><span class="c1">#/np.sin(np.pi*35/180)#(blockarea/bheight +  bheight)/2</span>
+
+            <span class="k">while</span> <span class="n">xiw</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xiw</span><span class="p">:</span>          
+                <span class="bp">self</span><span class="o">.</span><span class="n">xiw</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iw_spacing</span>
+
+        <span class="k">return</span> <span class="n">C</span><span class="p">,</span> <span class="n">Carea</span><span class="p">,</span> <span class="n">Ccount</span></div>
+    
+<div class="viewcode-block" id="BankErosionModel.get_ablation"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.get_ablation">[docs]</a>    <span class="k">def</span> <span class="nf">get_ablation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get river water shear velocity using the model of Costard et al. (2003). This model calculates hydraulic roughness based on bed gravel roughness.</span>
+<span class="sd">        </span>
+<span class="sd">        Return</span>
+<span class="sd">        ------</span>
+<span class="sd">        Va: float</span>
+<span class="sd">            instantaneous ablation velocity, m/s</span>
+<span class="sd">        heatflux: float</span>
+<span class="sd">            instantaneous heatflux, W/m2       </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+     
+        <span class="c1">#Costard et al. (2003)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span> 
+      
+        <span class="n">ksgravel</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">D84bed</span><span class="o">*</span><span class="mi">2</span> <span class="c1">#gravel roughness length scale</span>
+        
+        <span class="n">k_w</span> <span class="o">=</span> <span class="mf">0.598</span>
+        <span class="n">visc</span> <span class="o">=</span> <span class="mf">1.56e-6</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="mf">9.81</span>
+        
+        <span class="n">Cfbank</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span><span class="o">/</span><span class="mf">8.1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">H</span><span class="o">/</span><span class="p">(</span><span class="n">ksgravel</span><span class="p">))</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span>   
+        <span class="n">U</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_Ustar</span><span class="p">()</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Cfbank</span><span class="p">)</span>
+        
+
+        <span class="c1">#flow reynolds number</span>
+        <span class="n">Re</span> <span class="o">=</span> <span class="n">U</span><span class="o">*</span><span class="n">H</span> <span class="o">/</span> <span class="n">visc</span>
+        
+        <span class="c1">#flow Prandtl number</span>
+        <span class="n">Pr</span> <span class="o">=</span> <span class="n">visc</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_w</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">Cwater</span> <span class="o">/</span> <span class="n">k_w</span>
+
+        <span class="c1">#heat transfer coefficient</span>
+        <span class="n">Ch</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.00249</span><span class="o">*</span><span class="n">k_w</span><span class="o">*</span><span class="p">(</span><span class="n">Pr</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">Re</span><span class="o">**</span><span class="p">(</span><span class="mf">1.0552</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="n">H</span><span class="p">)</span>
+     
+        <span class="c1">#Ablation Velocity       </span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_ice</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">L_ice</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">Fi</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_perma</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_soil</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">To</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_perma</span><span class="p">)))</span>
+        <span class="n">Va</span> <span class="o">=</span> <span class="n">Ch</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Tw</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">To</span><span class="p">)</span><span class="o">/</span><span class="n">denom</span>
+        <span class="n">heatflux</span><span class="o">=</span> <span class="n">Va</span><span class="o">*</span><span class="n">denom</span>
+   
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">Va</span><span class="p">)),</span> <span class="n">heatflux</span></div>
+<div class="viewcode-block" id="BankErosionModel.get_ablation_bankgrainroughness"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.get_ablation_bankgrainroughness">[docs]</a>    <span class="k">def</span> <span class="nf">get_ablation_bankgrainroughness</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="sd">&quot;&quot;&quot;Get river water shear velocity using the model of Douglas and Lamb (2024). This model calculates hydraulic roughness based on bank sediment roughness.</span>
+<span class="sd">        </span>
+<span class="sd">        Return</span>
+<span class="sd">        ------</span>
+<span class="sd">        Va: float</span>
+<span class="sd">            instantaneous ablation velocity, m/s</span>
+<span class="sd">        heatflux: float</span>
+<span class="sd">            instantaneous heatflux, W/m2</span>
+<span class="sd">               </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#modified approach from Yaglom and Kader (1974), Douglas and Lamb (2024)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span> 
+        <span class="c1">#bank friction coefficient</span>
+        <span class="n">ksbank</span><span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">D50bank</span><span class="o">*</span><span class="mf">2.2</span><span class="o">*</span><span class="mf">2.5</span>
+        <span class="n">k_w</span> <span class="o">=</span> <span class="mf">0.598</span>
+        <span class="n">visc</span> <span class="o">=</span> <span class="mf">1.56e-6</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="mf">9.81</span>
+
+        
+
+        <span class="c1">#bank grain roughness   </span>
+        <span class="n">Reb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_Ustar</span><span class="p">()</span><span class="o">*</span><span class="n">ksbank</span><span class="o">/</span><span class="n">visc</span>
+        <span class="c1">#fluvial heat transefr coefficient</span>
+        <span class="n">Pr</span> <span class="o">=</span> <span class="n">visc</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_w</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">Cwater</span> <span class="o">/</span> <span class="n">k_w</span>
+
+        <span class="n">Betar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Reb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">0.55</span><span class="o">*</span><span class="n">Pr</span><span class="o">**</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">11</span><span class="p">)</span> <span class="o">+</span><span class="mf">0.95</span>
+        <span class="n">Betas</span> <span class="o">=</span> <span class="mf">12.5</span><span class="o">*</span><span class="p">(</span><span class="n">Pr</span><span class="o">**</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="mi">3</span><span class="p">))</span> <span class="o">-</span> <span class="mi">6</span>
+        <span class="n">Betatrans</span> <span class="o">=</span> <span class="p">(</span><span class="n">Reb</span><span class="o">/</span><span class="mi">100</span><span class="p">)</span><span class="o">*</span><span class="n">Betar</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">Reb</span><span class="o">/</span><span class="mi">100</span><span class="p">)</span><span class="o">*</span><span class="n">Betas</span>
+        <span class="n">Bt</span> <span class="o">=</span> <span class="n">Betatrans</span>
+        
+        
+        <span class="k">if</span> <span class="n">Reb</span><span class="o">&gt;</span><span class="mi">100</span><span class="p">:</span>
+             <span class="n">Bt</span> <span class="o">=</span> <span class="n">Betar</span>
+    
+        <span class="n">Beta1</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="n">alpha2</span><span class="o">=</span> <span class="mf">2.12</span>
+        <span class="c1"># heat transfer coefficient</span>
+        <span class="n">Ch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_Ustar</span><span class="p">()</span><span class="o">/</span><span class="p">(</span><span class="o">-</span><span class="n">alpha2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">ksbank</span><span class="o">/</span><span class="n">H</span><span class="p">)</span> <span class="o">+</span><span class="n">Bt</span> <span class="o">+</span><span class="n">Beta1</span><span class="p">)</span>      
+        <span class="c1">#Ablation Velocity</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_ice</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">L_ice</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">Fi</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_perma</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_soil</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">To</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_perma</span><span class="p">)))</span>
+        <span class="n">Va</span> <span class="o">=</span> <span class="n">Ch</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">Cwater</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho_w</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Tw</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">To</span><span class="p">)</span><span class="o">/</span><span class="n">denom</span>
+        <span class="n">heatflux</span><span class="o">=</span> <span class="n">Va</span><span class="o">*</span><span class="n">denom</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">Va</span><span class="p">)),</span> <span class="n">heatflux</span></div>
+
+    <span class="c1">### Boundary Conditions  ########</span>
+<div class="viewcode-block" id="BankErosionModel.load_bcs"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.load_bcs">[docs]</a>    <span class="k">def</span> <span class="nf">load_bcs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bcdf</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;read river water conditions from data records&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_H</span> <span class="o">=</span><span class="n">bcdf</span><span class="p">[</span><span class="s1">&#39;H_m&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_Qw</span> <span class="o">=</span> <span class="n">bcdf</span><span class="p">[</span><span class="s1">&#39;Qw_m3s&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_Tw</span> <span class="o">=</span> <span class="n">bcdf</span><span class="p">[</span><span class="s1">&#39;Tw_C&#39;</span><span class="p">]</span><span class="o">+</span><span class="mf">273.15</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_t</span> <span class="o">=</span> <span class="n">bcdf</span><span class="p">[</span><span class="s1">&#39;t_s&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_Ta</span> <span class="o">=</span> <span class="n">bcdf</span><span class="p">[</span><span class="s1">&#39;Ta_C&#39;</span><span class="p">]</span><span class="o">+</span><span class="mf">273.15</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">discharge</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ta</span> <span class="o">=</span> <span class="mf">273.15</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Tw</span> <span class="o">=</span> <span class="mf">273.15</span>
+
+        <span class="k">return</span> </div>
+    
+<div class="viewcode-block" id="BankErosionModel.update_bcs"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.update_bcs">[docs]</a>    <span class="k">def</span> <span class="nf">update_bcs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;interpolate river water conditions from data records&quot;&quot;&quot;</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>  <span class="o">%</span> <span class="p">(</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">365</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_H</span><span class="p">)</span> <span class="c1">#self.bc_record_Qw[self.bc_record_t&gt;=self.time][0]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">discharge</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_Qw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Tw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_Tw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_record_Ta</span><span class="p">)</span>
+
+        <span class="k">return</span> </div>
+    <span class="c1">#Inital conditions    </span>
+                               
+<div class="viewcode-block" id="BankErosionModel.create_initial_profile"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.create_initial_profile">[docs]</a>    <span class="k">def</span> <span class="nf">create_initial_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return</span>
+<span class="sd">        ------</span>
+<span class="sd">        profile: Object</span>
+<span class="sd">            initial river bank vertical profile</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">initslope</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bankslope_init</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xiw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iw_spacing</span>
+        <span class="n">topz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bankheight</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">topz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">initslope</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)))</span>
+        <span class="n">profile</span><span class="o">=</span> <span class="n">BankProfile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Tw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_stage</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D50block</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">profile</span></div>
+    
+<div class="viewcode-block" id="BankErosionModel.get_erosion"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.get_erosion">[docs]</a>    <span class="k">def</span> <span class="nf">get_erosion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return</span>
+<span class="sd">        ------</span>
+<span class="sd">        meanerosionrate_mperyear: float</span>
+<span class="sd">            mean annual erosion rate per year, averaged over the entire simulation</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dz</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+        <span class="n">nyears</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_time</span><span class="o">/</span><span class="p">(</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">365</span><span class="p">))</span>
+        <span class="n">z_interp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">meanerosionrate_mperyear</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">z_interp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="n">nyears</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">bankheight</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">meanerosionrate_mperyear</span></div>
+    
+<div class="viewcode-block" id="BankErosionModel.plot_bankprofile"><a class="viewcode-back" href="../modules.html#permabankerosionmodel.BankErosionModel.plot_bankprofile">[docs]</a>    <span class="k">def</span> <span class="nf">plot_bankprofile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        title: str</span>
+<span class="sd">            plot title</span>
+<span class="sd">            </span>
+<span class="sd">        Return</span>
+<span class="sd">        ------</span>
+<span class="sd">        fig: matplotlib figure</span>
+<span class="sd">            visual represntation of river bank vertical profile</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">-</span><span class="mi">10</span><span class="p">)]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">+</span><span class="mi">10</span><span class="p">])))</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="o">-</span><span class="mf">1.25</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">gravelz</span><span class="p">]),</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)])))</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanpercentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bc_record_H</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;lightblue&quot;</span><span class="p">,</span> <span class="n">edgecolor</span> <span class="o">=</span> <span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gravelz</span><span class="o">*-</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;grey&quot;</span><span class="p">,</span> <span class="n">edgecolor</span> <span class="o">=</span> <span class="s1">&#39;k&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span> <span class="s1">&#39;k&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;z (m)&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;x (m)&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">+</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">+</span><span class="mi">20</span><span class="p">,</span> <span class="mf">.5</span><span class="p">),</span> <span class="n">minor</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">gravelz</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">gravelz</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="mf">.5</span><span class="p">),</span> <span class="n">minor</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">-</span><span class="mi">2</span><span class="p">])),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="p">])))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">gravelz</span><span class="p">]),</span> <span class="mf">1.25</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">bankheight</span><span class="p">])))</span>
+        <span class="k">return</span> <span class="n">fig</span></div></div>
+  
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">PermafrostBankErosionModel</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Bank Erosion Model Module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2025, Josie Arcuri.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
