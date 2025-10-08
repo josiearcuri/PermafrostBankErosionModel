@@ -1,0 +1,11 @@
+name: permafrostbankerosionrmodel
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - matplotlib
+  - pandas
+  - sphinx
+  - sphinx-autodoc-typehints
+  - furo
