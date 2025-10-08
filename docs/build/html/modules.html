@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Bank Erosion Model Module &#8212; PermafrostBankErosionModel 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to PermafrostBankErosionModel’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-permabankerosionmodel">
+<span id="bank-erosion-model-module"></span><h1>Bank Erosion Model Module<a class="headerlink" href="#module-permabankerosionmodel" title="Permalink to this heading"></a></h1>
+<p>permafrostbankerosionrmodel.py</p>
+<p>JA 2025</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">permabankerosionmodel.</span></span><span class="sig-name descname"><span class="pre">BankErosionModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bcdf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>permafrost bank erosion model</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.create_initial_profile">
+<span class="sig-name descname"><span class="pre">create_initial_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.create_initial_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.create_initial_profile" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>profile</strong> – initial river bank vertical profile</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.entrain">
+<span class="sig-name descname"><span class="pre">entrain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.entrain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.entrain" title="Permalink to this definition"></a></dt>
+<dd><p>check if block is entrained and reset size if entrained
+:returns: <strong>excess</strong> – flag for if block/gravel is entrained or not
+:rtype: byte</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.get_Ustar">
+<span class="sig-name descname"><span class="pre">get_Ustar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.get_Ustar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.get_Ustar" title="Permalink to this definition"></a></dt>
+<dd><p>get river water shear velocity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ustar</strong> – river water shear velocity</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.get_ablation">
+<span class="sig-name descname"><span class="pre">get_ablation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.get_ablation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.get_ablation" title="Permalink to this definition"></a></dt>
+<dd><p>Get river water shear velocity using the model of Costard et al. (2003). This model calculates hydraulic roughness based on bed gravel roughness.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>Va</strong> (<em>float</em>) – instantaneous ablation velocity, m/s</p></li>
+<li><p><strong>heatflux</strong> (<em>float</em>) – instantaneous heatflux, W/m2</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.get_ablation_bankgrainroughness">
+<span class="sig-name descname"><span class="pre">get_ablation_bankgrainroughness</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.get_ablation_bankgrainroughness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.get_ablation_bankgrainroughness" title="Permalink to this definition"></a></dt>
+<dd><p>Get river water shear velocity using the model of Douglas and Lamb (2024). This model calculates hydraulic roughness based on bank sediment roughness.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>Va</strong> (<em>float</em>) – instantaneous ablation velocity, m/s</p></li>
+<li><p><strong>heatflux</strong> (<em>float</em>) – instantaneous heatflux, W/m2</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.get_erosion">
+<span class="sig-name descname"><span class="pre">get_erosion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.get_erosion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.get_erosion" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>meanerosionrate_mperyear</strong> – mean annual erosion rate per year, averaged over the entire simulation</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.load_bcs">
+<span class="sig-name descname"><span class="pre">load_bcs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bcdf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.load_bcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.load_bcs" title="Permalink to this definition"></a></dt>
+<dd><p>read river water conditions from data records</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.plot_bankprofile">
+<span class="sig-name descname"><span class="pre">plot_bankprofile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.plot_bankprofile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.plot_bankprofile" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>title</strong> (<em>str</em>) – plot title</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fig</strong> – visual represntation of river bank vertical profile</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.run" title="Permalink to this definition"></a></dt>
+<dd><p>Run simulation from current profile to specified end time</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.solve_collapse">
+<span class="sig-name descname"><span class="pre">solve_collapse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.solve_collapse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.solve_collapse" title="Permalink to this definition"></a></dt>
+<dd><p>calculate erosion from upper bank collapse, based on Barnhart et al. (2003)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>C</strong> (<em>array</em>) – erosion for each node in the bank profile</p></li>
+<li><p><strong>Carea</strong> (<em>float</em>) – area of collapsed block</p></li>
+<li><p><strong>Ccount</strong> (<em>int</em>) – number of collapses in timestep</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankErosionModel.update_bcs">
+<span class="sig-name descname"><span class="pre">update_bcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankErosionModel.update_bcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankErosionModel.update_bcs" title="Permalink to this definition"></a></dt>
+<dd><p>interpolate river water conditions from data records</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="permabankerosionmodel.BankProfile">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">permabankerosionmodel.</span></span><span class="sig-name descname"><span class="pre">BankProfile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Tw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D50block</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/permabankerosionmodel.html#BankProfile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#permabankerosionmodel.BankProfile" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>class for bank profile objects</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PermafrostBankErosionModel</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Bank Erosion Model Module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to PermafrostBankErosionModel’s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2025, Josie Arcuri.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/modules.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

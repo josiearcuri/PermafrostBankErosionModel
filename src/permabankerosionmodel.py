@@ -46,15 +46,14 @@ class BankProfile:
 class BankErosionModel:
     """permafrost bank erosion model"""
     def __init__(self, params, bcdf):
-        """
-        initialize model
+        """initialize model.
 
         Parameters
         ----------
         params: dict
-            all model parameters
+            all model parameters.
         bcdict: dict
-            all boundary conditions
+            all boundary conditions.
         """
         self.D84bed = params["D84bed"] #fluvial gravel 84th percentile diameter
         self.D50bank = params["D50bank"]#bank sediment 50th percentile diameter
@@ -200,6 +199,7 @@ class BankErosionModel:
 # shear velocity
     def get_Ustar(self):
         """get river water shear velocity
+        
         Return
         ------
         ustar: float
@@ -211,15 +211,15 @@ class BankErosionModel:
     
     def solve_collapse(self):
         """calculate erosion from upper bank collapse, based on Barnhart et al. (2003)
-            Return
-            -------
-            C: array
-                erosion for each node in the bank profile
-            Carea: float
-                area of collapsed block
-            Ccount: int
-                number of collapses in timestep
-            
+        
+        Return
+        -------
+        C: array
+            erosion for each node in the bank profile
+        Carea: float
+            area of collapsed block
+        Ccount: int
+            number of collapses in timestep
         """
         x = self.profile.x
         Carea = 0    
@@ -415,7 +415,7 @@ class BankErosionModel:
     def plot_bankprofile(self, title):
         """
         Parameters
-        ------
+        ----------
         title: str
             plot title
             
