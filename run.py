@@ -18,8 +18,8 @@ def get_params():
     options = {}
 
     # Define input directories, this date is used in the accompanying manuscript
-    options["dischargedata"] = 'data/primarydata.csv'
-    options["metdata"] = 'data/CanningRiverAll_JA.csv'
+    options["dischargedata"] = 'data/dmddata.csv'
+    options["metdata"] = 'data/Mfile1.csv'
     options["metdata2"] = 'data/Mfile2.csv'
 
     # Simulation name
