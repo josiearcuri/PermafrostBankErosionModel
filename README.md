@@ -1,7 +1,7 @@
 # PermafrostBankErosionModel
 
 **Author:** Josie Arcuri  
-**Date:** October 2025  
+**Date:** November 2025  
 
 PermafrostBankErosionModel is a Python-based simulation tool for modeling riverbank erosion in permafrost-dominated environments, where thermal and mechanical processes interact seasonally. The model simulates river bank ablation and collapse under fluvial and thermal forcing.
 
@@ -20,10 +20,9 @@ PermafrostBankErosionModel is a Python-based simulation tool for modeling riverb
 ## Features
 
 - Simulates thermal ablation and mechanical collapse of permafrost banks
-- Uses realistic fluvial forcing from boundary condition time series
-- Supports customizable input parameters for river and permafrost characteristics
+- Uses realistic forcing from boundary condition time series
+- Supports customizable input parameters for regional prmafrost river characteristics
 - Outputs daily and annual erosion rates
-
 ---
 
 
@@ -32,6 +31,7 @@ PermafrostBankErosionModel is a Python-based simulation tool for modeling riverb
 Clone the repository and install the required dependencies:
 
 git clone https://github.com/yourusername/PermafrostBankErosionModel.git
+
 cd PermafrostBankErosionModel
 
 ### Option 1: Using pip
@@ -51,7 +51,7 @@ conda activate permafrostbankerosionrmodel
 ## Input Files
 The model requires two inputs:
 
-Parameter dictionary (params) with keys such as:
+Parameter dictionary (params) with keys:
 
 "run_duration" (in seconds)
 
@@ -83,61 +83,55 @@ Boundary condition dataframe (bcdf) in pandas.DataFrame format with the followin
 
 Other datasets that are used as input can be found in the data folder and are:
 
-    CanningRiverAll_JA.csv
-* Met data from the USGS Canning River Meterological Station
-
     Mfile1.csv
-* Met data from XXXXXX 
+* 2023 Meteorological data from the Canning River, AK collected with instruments maintained by Frank Urban
 
     Mfile2.csv
-* Met data from XXXXXXX 
+* 2023 Meteorological data from Deadhorse, AK made available by the Permafrost Laboratory Geophysical Institute
 
-    primarydata.csv
-* USGS daily mean discharge
+   dmddischarge.csv
+* 2009 daily mean discharge from the Canning River discharge station (USGS, lat, lon) at Staines (USGS, 2023).
 
 
 ---
 
-
 ## Running the Model
 
-from permafrostbankerosionrmodel import permafrostbankerosionrmodel
+from permafrostbankerosionrmodel import permafrostbankerosionmodel
 import pandas as pd
 
 ### Define parameters
 params = {
-    "run_duration": 86400 * 365 * 3,  # 3 years in seconds
-    "dt": 86400,                      # daily timestep
+    "run_duration": 60 * 60 *24 * 365 * 3,  # 3 years in seconds
+    "dt": 86400,                      # daily timestep (seconds)
     "dz": 0.05,                       # vertical resolution (m)
-    "icepercent": 50,
-    "gravelz": 0.3,
-    "surface_d84": 0.05,
-    "bank_d50": 0.01,
-    "bedslope": 0.001,
-    "bankheight": 2.0,
-    "initial_bankslope": 0.5,
-    "iceon": 300,
-    "IWspacing": 1.5,
-    "ablationmodel": "bank"
+    "icepercent": 50,                 # volumetric ice content of bank material in %
+    "gravelz": 0.3,                   # elevation of the uppermost surface of the bank toe above the river bed (m)
+    "surface_d84": 0.064,             # 84th percentile grain diameter of the clasts on bank toes (m)
+    "bank_d50": 0.01,                 # 50th percentile grain diameter of the inorganic sediment in bank soil (m)
+    "bedslope": 0.003,                # river bed slope (m/m)
+    "bankheight": 2.0,                # river bank surface height above the river bed (m)
+    "iceon": 300,                     # end of the open water season (julian day)
+    "IWspacing": 10,                  # distance between ice wedge center, or troughs in the floodplain (m)
 }
 
 ### Load boundary condition data
-bcdf = pd.read_csv("boundary_conditions.csv")
+bcdataframe = pd.read_csv("boundary_conditions.csv")
 
 ### Initialize and run model
-model = IcyRiver(params, bcdf)
+model = IcyRiver(params, bcdataframe)
 model.run()
 
 ### Get erosion results
-daily_rates, yearly_mean, erosion_series = model.get_erosion()
-print("Mean yearly erosion rate (m/year):", yearly_mean)
+mean_daily_erosion_rate, mean_annual_erosion_rate, instant_erosion_rates = model.get_erosion()
+print("Mean annual erosion rate (m/year):", mean_annual_erosion_rate)
 
 ---
 
 
 ## Output
-default_finalprofile: Bank profile at the end of the simulation
-results: Model input and output data
+default_finalprofile: Bank profile at the end of the simulation. this is a 1-d array of horizantal distance from x = 0.
+results: Model inputs and outputs in a data table
 
 
 ---
