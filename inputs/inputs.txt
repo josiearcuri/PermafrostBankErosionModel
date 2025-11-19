@@ -1,7 +1,25 @@
 {"dischargedata":'data/dmddata.csv',
 "metdata":'data/Mfile1.csv',
 "metdata2" : 'data/Mfile2.csv',
-"identifier": 
-
-
+"identifier": "default",
+"ablationmodel": "gravelroughness",
+"dz":.01,
+"dt":10800, 
+"runtime":60*60*24*365*5,
+"todoy": 151,
+"tau": 14,
+"iceondoy":274,
+"T_permafrost_C": -8,
+"D84bed":.064,
+"D50bank":.001,
+"bh": 2,
+"gravelz":.5,
+"bfbh": 1.5,
+"width":800,
+"Xiw": 30,
+"Fi": 75,
+"starth": .5,
+"bedslope": .003,
+"nullflag": False
 }
+ 
