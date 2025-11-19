@@ -126,7 +126,7 @@ params = {
 ```
 ### Load boundary condition data
 ```
-bcdataframe = pd.read_csv("boundary_conditions.csv")
+bcdataframe = pd.read_csv("inputs/example_boundary_conditions.csv")
 ```
 ### Initialize and run model
 ```
