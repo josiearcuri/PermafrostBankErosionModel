@@ -18,6 +18,6 @@ abstract: >-
 keywords:
   - Permafrost Bank Erosion Model
   - Permafrost Bank Erosion
-license: GPLv3
+license: GPL-3.0
 version: 0.0.1
 date-released: '2025-10-05'
