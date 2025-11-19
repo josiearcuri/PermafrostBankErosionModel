@@ -91,24 +91,25 @@ Boundary condition dataframe (bcdf) in pandas.DataFrame format with the followin
 
 Other datasets that are used as input can be found in the data folder and are:
 
-    Mfile1.csv
+```Mfile1.csv```
 * 2023 Meteorological data from the Canning River, AK collected with instruments maintained by Frank Urban.
 
-    Mfile2.csv
+ ``` Mfile2.csv```
 * 2023 Meteorological data from Deadhorse, AK made available by the Permafrost Laboratory Geophysical Institute (Deadhorse, 70.1613,-148.4653), available from www.permafrostwatch.org
 
-   dmddischarge.csv
+```dmddischarge.csv```
 * 2009 daily mean discharge from the Canning River above Staines River near Deadhorse station (15955000, 69.8817, -146.3887) (US Geological Survey, 2023).
 
 
 ---
 
 ## Running the Model
-
+```
 from src import permafrostbankerosionmodel as pbem
 import pandas as pd
-
+```
 ### Define parameters
+```
 params = {
     "run_duration": 60 * 60 *24 * 365 * 3,  # 3 years in seconds
     "dt": 86400,                      # daily timestep (seconds)
@@ -122,17 +123,21 @@ params = {
     "iceon": 300,                     # end of the open water season (julian day)
     "IWspacing": 10,                  # distance between ice wedge center, or troughs in the floodplain (m)
 }
-
+```
 ### Load boundary condition data
+```
 bcdataframe = pd.read_csv("boundary_conditions.csv")
-
+```
 ### Initialize and run model
+```
 model = pbem.BankErosionModel(params, bcdataframe)
 model.run()
-
+```
 ### Get erosion results
+```
 mean_annual_erosion_rate = model.get_erosion()
 print("Mean annual erosion rate (m/year):", mean_annual_erosion_rate)
+```
 
 ---
 
