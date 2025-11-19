@@ -130,7 +130,7 @@ bcdataframe = pd.read_csv("inputs/example_boundary_conditions.csv")
 ```
 ### Initialize and run model
 ```
-model = pbem.BankErosionModel(params, bcdataframe)
+model = pbem.PermafrostBankErosionModel(params, bcdataframe)
 model.run()
 ```
 ### Get erosion results
