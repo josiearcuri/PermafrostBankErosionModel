@@ -14,7 +14,7 @@ PermafrostBankErosionModel is a Python-based simulation tool for modeling riverb
 - [Output](#output)
 - [Dependencies](#dependencies)
 - [License](#license)
-- [Acknowledgments] (#acknowledgments)
+- [Acknowledgments](#acknowledgments)
 ---
 
 ## Features
@@ -43,7 +43,7 @@ pip install -r requirements.txt
 ### Option 2: Using conda
 
 conda env create -f environment.yml
-conda activate permafrostbankerosionrmodel
+conda activate permafrostbankerosionmodel
 
 ---
 
@@ -59,9 +59,19 @@ Parameter dictionary (params) with keys:
 
 "dz" (vertical resolution in meters)
 
-"icepercent", "gravelz", "surface_d84", "bank_d50"
+"icepercent" (volumetric ice content in percent)
 
-"bedslope", "bankheight", "initial_bankslope"
+"gravelz" ( in meters)
+
+"surface_d84" (84th percentile grain diameter of gravel on the bank toe in meters)
+
+"bank_d50" (median grain size of inorganic particles in bank material in meters)
+
+"bedslope" (river bed slope in m/m)
+
+"bankheight" (bank height in meters)
+
+"initial_bankslope" ()
 
 "iceon" (day of year freezing starts)
 
@@ -84,20 +94,20 @@ Boundary condition dataframe (bcdf) in pandas.DataFrame format with the followin
 Other datasets that are used as input can be found in the data folder and are:
 
     Mfile1.csv
-* 2023 Meteorological data from the Canning River, AK collected with instruments maintained by Frank Urban
+* 2023 Meteorological data from the Canning River, AK collected with instruments maintained by Frank Urban.
 
     Mfile2.csv
-* 2023 Meteorological data from Deadhorse, AK made available by the Permafrost Laboratory Geophysical Institute
+* 2023 Meteorological data from Deadhorse, AK made available by the Permafrost Laboratory Geophysical Institute (Deadhorse, 70.1613,-148.4653), available from www.permafrostwatch.org
 
    dmddischarge.csv
-* 2009 daily mean discharge from the Canning River discharge station (USGS, lat, lon) at Staines (USGS, 2023).
+* 2009 daily mean discharge from the Canning River above Staines River near Deadhorse station (15955000, 69.8817, -146.3887) (US Geological Survey, 2023).
 
 
 ---
 
 ## Running the Model
 
-from permafrostbankerosionrmodel import permafrostbankerosionmodel
+from src import permafrostbankerosionmodel as pbem
 import pandas as pd
 
 ### Define parameters
@@ -119,11 +129,11 @@ params = {
 bcdataframe = pd.read_csv("boundary_conditions.csv")
 
 ### Initialize and run model
-model = IcyRiver(params, bcdataframe)
+model = pbem.BankErosionModel(params, bcdataframe)
 model.run()
 
 ### Get erosion results
-mean_daily_erosion_rate, mean_annual_erosion_rate, instant_erosion_rates = model.get_erosion()
+mean_annual_erosion_rate = model.get_erosion()
 print("Mean annual erosion rate (m/year):", mean_annual_erosion_rate)
 
 ---
@@ -156,5 +166,4 @@ GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 (GPLv3)
 
 ## Acknowledgments
 Developed by Josie Arcuri (2025). For questions or collaboration inquiries, please contact [Josephine.Arcuri@colorado.edu].
-
 ---
