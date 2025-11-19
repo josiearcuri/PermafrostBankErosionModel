@@ -166,4 +166,5 @@ GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 (GPLv3)
 
 ## Acknowledgments
 Developed by Josie Arcuri (2025). For questions or collaboration inquiries, please contact [Josephine.Arcuri@colorado.edu].
+
 ---
