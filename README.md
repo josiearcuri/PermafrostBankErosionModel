@@ -71,8 +71,6 @@ Parameter dictionary (params) with keys:
 
 "bankheight" (bank height in meters)
 
-"initial_bankslope" ()
-
 "iceon" (day of year freezing starts)
 
 "IWspacing" (ice wedge spacing in m)
