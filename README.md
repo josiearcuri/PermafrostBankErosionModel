@@ -21,8 +21,8 @@ PermafrostBankErosionModel is a Python-based simulation tool for modeling riverb
 
 - Simulates thermal ablation and mechanical collapse of permafrost banks
 - Uses realistic forcing from boundary condition time series
-- Supports customizable input parameters for regional prmafrost river characteristics
-- Outputs daily and annual erosion rates
+- Supports customizable input parameters for regional permafrost river characteristics
+- Outputs time-averaged annual erosion rates and bank profile object
 ---
 
 
