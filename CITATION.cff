@@ -16,8 +16,9 @@ abstract: >-
   The Permafrost Bank Erosion Model simulates the melting of interstitial substrate ice and
   associated riverbank collapse.
 keywords:
-  - Permafrost Bank Erosion Model
-  - Permafrost Bank Erosion
+  - Geomorphology
+  - thermal erosion
+  - riverbank erosion
 license: "GPL-3.0"
 version: 0.0.1
-date-released: '2025-10-05'
+date-released: "2025-11-21"
