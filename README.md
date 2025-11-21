@@ -30,7 +30,7 @@ PermafrostBankErosionModel is a Python-based simulation tool for modeling riverb
 
 Clone the repository and install the required dependencies:
 
-git clone https://github.com/yourusername/PermafrostBankErosionModel.git
+git clone https://github.com/josiearcuri/PermafrostBankErosionModel.git
 
 cd PermafrostBankErosionModel
 
